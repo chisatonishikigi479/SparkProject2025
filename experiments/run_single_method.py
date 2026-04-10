@@ -1,5 +1,5 @@
 """
-Run Single SPARK Benchmark with Strict CBF + Reliable Saving
+Single Strict CBF run - Headless mode (no viewer, much faster + stable)
 """
 
 import sys
@@ -14,12 +14,12 @@ sys.path.insert(0, os.path.join(project_root, 'spark'))
 from configs.benchmark_config import get_config
 from spark_pipeline import BenchmarkPipeline as Pipeline
 
+# Create output folder
 timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M")
-output_dir = f"results/cbf_single_{timestamp}"
+output_dir = f"results/cbf_headless_{timestamp}"
 os.makedirs(output_dir, exist_ok=True)
 
-print("Starting SPARK Benchmark with Strict CBF")
-print(f"Saving results to: {output_dir}\n")
+print("Starting Strict CBF benchmark in HEADLESS mode...\n")
 
 cfg = get_config(
     safety_method="BasicControlBarrierFunction",
@@ -27,18 +27,27 @@ cfg = get_config(
     lambda_cbf=1.0
 )
 
+# Force headless mode + saving
 cfg.output_dir = output_dir
 cfg.experiment_name = "Strict_CBF"
 
-if hasattr(cfg, 'max_steps'):
-    cfg.max_steps = 150
-elif hasattr(cfg, 'runner') and hasattr(cfg.runner, 'max_steps'):
-    cfg.runner.max_steps = 150
+# Disable all rendering / viewer to avoid the debug_object error
+#cfg.rendering.enabled = False
+if hasattr(cfg, 'visualization'):
+    cfg.visualization.render = False
+if hasattr(cfg, 'render'):
+    cfg.render = False
 
-print("Starting pipeline...")
+# Try to disable viewer completely
+if hasattr(cfg, 'use_viewer'):
+    cfg.use_viewer = False
+if hasattr(cfg, 'viewer'):
+    cfg.viewer = False
+
+print(f"Saving results to: {output_dir}")
 
 pipeline = Pipeline(cfg)
 pipeline.run()
 
-print("\nCBF Benchmark Finished!")
-print(f"Results should be saved in: {output_dir}/")
+print("\nBenchmark finished successfully!")
+print(f"Results saved in: {output_dir}/")
