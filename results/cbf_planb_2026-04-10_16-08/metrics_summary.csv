@@ -1,0 +1,2 @@
+safety_method,max_steps,success_rate,collision_rate,avg_dist_to_goal,min_safety_distance,avg_safety_distance
+CBF,150,,,,,
