@@ -1,6 +1,5 @@
 """
-Run Single SPARK Benchmark with Strict CBF + Save Results
-Run from project root only: python experiments/run_single_method.py
+Run Single SPARK Benchmark with Strict CBF + Reliable Saving
 """
 
 import sys
@@ -20,25 +19,26 @@ output_dir = f"results/cbf_single_{timestamp}"
 os.makedirs(output_dir, exist_ok=True)
 
 print("Starting SPARK Benchmark with Strict CBF")
-print(f"Results will be saved to: {output_dir}\n")
+print(f"Saving results to: {output_dir}\n")
 
 cfg = get_config(
     safety_method="BasicControlBarrierFunction",
-    min_distance=0.18,  
-    lambda_cbf=1.0,         
+    min_distance=0.18,
+    lambda_cbf=1.0
 )
 
 cfg.output_dir = output_dir
 cfg.experiment_name = "Strict_CBF"
 
 if hasattr(cfg, 'max_steps'):
-    cfg.max_steps = 125
+    cfg.max_steps = 150
 elif hasattr(cfg, 'runner') and hasattr(cfg.runner, 'max_steps'):
-    cfg.runner.max_steps = 125
+    cfg.runner.max_steps = 150
+
+print("Starting pipeline...")
 
 pipeline = Pipeline(cfg)
 pipeline.run()
 
 print("\nCBF Benchmark Finished!")
-print(f"Results saved in: {output_dir}/")
-print("   Look for .csv files, logs, and metric summaries inside this folder.")
+print(f"Results should be saved in: {output_dir}/")
