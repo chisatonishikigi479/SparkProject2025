@@ -186,26 +186,34 @@ if __name__ == "__main__":
         
         "G1SportMode_D1_WG_SO_v1",
     ]
+    '''
     run(test_case_name = "G1SportMode_D1_WG_SO_v1",
         safe_algo = "sma",
         safety_index = "si1",
         save_path = "results_rsss.json")
+    '''
     
-    run(test_case_name = "G1SportMode_D1_WG_SO_v1",
+    ''' 
+   run(test_case_name = "G1SportMode_D1_WG_SO_v1",
         safe_algo = "rssa",
         safety_index = "si1",
         save_path = "results_rssa.json")
+    '''
     
+    '''
     run(test_case_name = "G1SportMode_D1_WG_SO_v1",
         safe_algo = "ssa",
         safety_index = "si1",
         save_path = "results_ssa.json")
+    '''
     
+    '''
     run(test_case_name = "G1SportMode_D1_WG_SO_v1",
         safe_algo = "sss",
         safety_index = "si1",
         save_path = "results_sss.json")
     
+    '''
     run(test_case_name = "G1SportMode_D1_WG_SO_v1",
         safe_algo = "rsss",
         safety_index = "si1",
@@ -214,17 +222,17 @@ if __name__ == "__main__":
     run(test_case_name = "G1SportMode_D1_WG_SO_v1",
         safe_algo = "cbf",
         safety_index = "si1",
-        save_path = "results_rsss.json")
+        save_path = "results_cbf.json")
     
     run(test_case_name = "G1SportMode_D1_WG_SO_v1",
         safe_algo = "rcbf",
         safety_index = "si1",
-        save_path = "results_rsss.json")
+        save_path = "results_rcbf.json")
     
     run(test_case_name = "G1SportMode_D1_WG_SO_v1",
         safe_algo = "pfm",
         safety_index = "si1",
-        save_path = "results_rsss.json")
+        save_path = "results_pfm.json")
     
     
     
