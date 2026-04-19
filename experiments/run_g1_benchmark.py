@@ -121,118 +121,190 @@ def config_safety_module(cfg: PipelineConfig, **kwargs):
     return cfg
 
 def config_pipeline(cfg: PipelineConfig, **kwargs):
-    """Configure pipeline settings."""
-    cfg = generate_benchmark_test_case(cfg, kwargs.get("test_case_name", "G1MobileBase_D1_WG_SO_v0"))
+    test_case_name = kwargs.get("test_case_name", "G1MobileBase_D1_WG_SO_v0")
+    cfg = generate_benchmark_test_case(cfg, test_case_name)
+    
     cfg.max_num_steps = 2000
     cfg.max_num_reset = -1
     cfg.enable_logger = True
     cfg.enable_safe_zone_render = False
 
-    # Task-specific configurations using pattern matching
-    if "FixedBase" in cfg.env.task.task_name:
+    attack_type = kwargs.get("attack_type", None)     
+    attack_level = kwargs.get("attack_level", "medium") 
+
+    if attack_type == "perception_noise":
+        noise_std = {"low": 0.02, "medium": 0.05, "high": 0.10}.get(attack_level, 0.05)
+        cfg.env.task.perception_noise_std = noise_std          
+        print(f"Perception noise attack enabled (std={noise_std})")
+
+    elif attack_type == "latency":
+        delay_steps = {"low": 2, "medium": 5, "high": 10}.get(attack_level, 5)
+        cfg.env.task.obstacle_update_delay = delay_steps
+        print(f"Latency attack enabled (delay={delay_steps} steps)")
+
+    elif attack_type == "crowding":
+        density_multiplier = {"low": 1.5, "medium": 2.0, "high": 3.0}.get(attack_level, 2.0)
+        cfg.env.task.obstacle_density_multiplier = density_multiplier
+        cfg.env.task.obstacle_min_distance = 0.15   # force tighter constraints
+        print(f"Crowding attack enabled (density x{density_multiplier})")
+
+    if "FixedBase" in getattr(cfg.env.task, 'task_name', ''):
         cfg.metric_selection.dist_goal_base = False
     else:
         cfg.metric_selection.dist_goal_base = True
 
-    # Configure metrics to track by directly modifying the attributes
     cfg.metric_selection.dist_self = True
     cfg.metric_selection.dist_robot_to_env = True
     cfg.metric_selection.dist_goal_arm = True
     cfg.metric_selection.seed = True
     cfg.metric_selection.done = True
-    
+
+    cfg.metric_selection.attack_type = True
+    cfg.metric_selection.attack_level = True
+
     return cfg
     
 def run( **kwargs):
-    """Main execution block to run the benchmark pipeline."""
-    # Generate initial pipeline configuration
     cfg = PipelineConfig()
     
-    # Apply configuration modules in order
     cfg = config_pipeline(cfg, **kwargs)
     cfg = config_task_module(cfg, **kwargs)
     cfg = config_agent_module(cfg, **kwargs)
     cfg = config_policy_module(cfg, **kwargs)
     cfg = config_safety_module(cfg, **kwargs)
     
-    # Run the pipeline
     pipeline = Pipeline(cfg)
-    pipeline.run(save_path = kwargs.get("save_path", None))
     
+    save_path = kwargs.get("save_path")
+    print(f"Running {kwargs.get('safe_algo', 'unknown')} | save_path = {save_path}")
+    
+    try:
+        pipeline.run(save_path=save_path)  
+    except Exception as e:
+        print(f"Error during pipeline.run(): {e}")
+        import traceback
+        traceback.print_exc()
+    
+    print(f"Finished run. Expected results file: {save_path}\n")
     return
+    
+def run_adversarial_sweep(**base_kwargs):
+    test_case = base_kwargs.get("test_case_name")
+    safe_algo = base_kwargs.get("safe_algo")
+    
+    print(f"Starting adversarial sweep for {safe_algo} on task: {test_case}")
 
+    attack_types = [None, "perception_noise", "latency", "crowding"]
+    levels = ["low", "medium", "high"]
+
+    for attack in attack_types:
+        for level in levels if attack else [None]:  
+            kwargs = base_kwargs.copy()
+            kwargs["attack_type"] = attack
+            if attack:
+                kwargs["attack_level"] = level
+                kwargs["save_path"] = f"results_{safe_algo}_attack_{attack}_{level}.json"
+            else:
+                kwargs["save_path"] = f"results_{safe_algo}_nominal.json"
+            
+            kwargs["enable_viewer"] = False
+            
+            run(**kwargs)
+
+def run_benchmark_sweep(**base_kwargs):
+
+    test_case = base_kwargs.get("test_case_name")
+    safe_algo = base_kwargs.get("safe_algo")
+    safety_index = base_kwargs.get("safety_index", "si1")
+    
+    print(f"Starting sweep for {safe_algo} with safety_index={safety_index} on task: {test_case}")
+
+    
+    if safe_algo == "ssa":
+        param_list = [0.01, 0.05, 0.1, 0.2, 0.5]
+        param_name = "eta_ssa"
+        for value in param_list:
+            kwargs = base_kwargs.copy()
+            kwargs[param_name] = value
+            kwargs["enable_viewer"] = False
+            kwargs["save_path"] = f"results_{safe_algo}_{param_name}_{value}.json"
+            run(**kwargs)
+
+    elif safe_algo in ["rssa", "rcbf", "rsss"]:
+        param_list = [1e2, 5e2, 1e3, 5e3, 1e4]
+        param_name = "slack_weight"
+        for value in param_list:
+            kwargs = base_kwargs.copy()
+            kwargs[param_name] = value
+            kwargs["enable_viewer"] = False
+            kwargs["save_path"] = f"results_{safe_algo}_{param_name}_{value}.json"
+            run(**kwargs)
+
+    elif safe_algo in ["sss", "cbf"]:
+        param_list = [1.0, 5.0, 10.0, 20.0, 50.0]
+        param_name = "lambda_sss" if safe_algo in ["sss", "rsss"] else "lambda_cbf"
+        for value in param_list:
+            kwargs = base_kwargs.copy()
+            kwargs[param_name] = value
+            kwargs["enable_viewer"] = False
+            kwargs["save_path"] = f"results_{safe_algo}_{param_name}_{value}.json"
+            run(**kwargs)
+
+    elif safe_algo == "pfm":
+        param_list = [0.1, 0.5, 1.0, 2.0, 5.0]
+        param_name = "c_pfm"
+        for value in param_list:
+            kwargs = base_kwargs.copy()
+            kwargs[param_name] = value
+            kwargs["enable_viewer"] = False
+            kwargs["save_path"] = f"results_{safe_algo}_{param_name}_{value}.json"
+            run(**kwargs)
+
+    elif safe_algo == "sma":
+        param_list = [0.1, 0.5, 1.0, 2.0, 5.0]
+        param_name = "c_sma"
+        for value in param_list:
+            kwargs = base_kwargs.copy()
+            kwargs[param_name] = value
+            kwargs["enable_viewer"] = False
+            kwargs["save_path"] = f"results_{safe_algo}_{param_name}_{value}.json"
+            run(**kwargs)
+
+    else:
+        print(f"No sweep defined for {safe_algo}. Running once with defaults.")
+        kwargs = base_kwargs.copy()
+        kwargs["enable_viewer"] = False
+        kwargs["save_path"] = f"results_{safe_algo}_default.json"
+        run(**kwargs)
+            
+            
 if __name__ == "__main__":
-    # List of test cases to choose from
-    TASK_CASE_LIST = [
-        "G1FixedBase_D1_AG_SO_v0",
-        "G1FixedBase_D1_AG_SO_v1",
-        "G1FixedBase_D1_AG_DO_v0",
-        "G1FixedBase_D1_AG_DO_v1",
-        
-        "G1FixedBase_D2_AG_SO_v0",
-        "G1FixedBase_D2_AG_SO_v1",
-        "G1FixedBase_D2_AG_DO_v0",
-        "G1FixedBase_D2_AG_DO_v1",
-        
-        "G1MobileBase_D1_WG_SO_v0",
-        "G1MobileBase_D1_WG_SO_v1",
-        "G1MobileBase_D1_WG_DO_v0",
-        "G1MobileBase_D1_WG_DO_v1",
-        
-        "G1MobileBase_D2_WG_SO_v0"
-        "G1MobileBase_D2_WG_SO_v1"
-        "G1MobileBase_D2_WG_DO_v0"
-        "G1MobileBase_D2_WG_DO_v1"
-        
-        "G1SportMode_D1_WG_SO_v1",
+    TASK_CASE = "G1SportMode_D1_WG_SO_v1"  
+    
+    sweeps = [
+        {"safe_algo": "ssa",   "safety_index": "si1"},
+        {"safe_algo": "rssa",  "safety_index": "si1"},
+        {"safe_algo": "sss",   "safety_index": "si1"},
+        {"safe_algo": "rsss",  "safety_index": "si1"},
+        {"safe_algo": "cbf",   "safety_index": "si1"},
+        {"safe_algo": "rcbf",  "safety_index": "si1"},
+        {"safe_algo": "pfm",   "safety_index": "si1"},
+        {"safe_algo": "sma",   "safety_index": "si1"},
+
     ]
     '''
-    run(test_case_name = "G1SportMode_D1_WG_SO_v1",
-        safe_algo = "sma",
-        safety_index = "si1",
-        save_path = "results_rsss.json")
+    for sweep_config in sweeps:
+        run_benchmark_sweep(
+            test_case_name=TASK_CASE,
+            **sweep_config
+        )
     '''
     
-    ''' 
-   run(test_case_name = "G1SportMode_D1_WG_SO_v1",
-        safe_algo = "rssa",
-        safety_index = "si1",
-        save_path = "results_rssa.json")
-    '''
-    
-    '''
-    run(test_case_name = "G1SportMode_D1_WG_SO_v1",
-        safe_algo = "ssa",
-        safety_index = "si1",
-        save_path = "results_ssa.json")
-    '''
-    
-    '''
-    run(test_case_name = "G1SportMode_D1_WG_SO_v1",
-        safe_algo = "sss",
-        safety_index = "si1",
-        save_path = "results_sss.json")
-    
-    '''
-    run(test_case_name = "G1SportMode_D1_WG_SO_v1",
-        safe_algo = "rsss",
-        safety_index = "si1",
-        save_path = "results_rsss.json")
-    
-    run(test_case_name = "G1SportMode_D1_WG_SO_v1",
-        safe_algo = "cbf",
-        safety_index = "si1",
-        save_path = "results_cbf.json")
-    
-    run(test_case_name = "G1SportMode_D1_WG_SO_v1",
-        safe_algo = "rcbf",
-        safety_index = "si1",
-        save_path = "results_rcbf.json")
-    
-    run(test_case_name = "G1SportMode_D1_WG_SO_v1",
-        safe_algo = "pfm",
-        safety_index = "si1",
-        save_path = "results_pfm.json")
-    
+    for algo in ["ssa", "rssa", "cbf", "rcbf", "rsss"]:
+        run_adversarial_sweep(
+            test_case_name=TASK_CASE,
+            safe_algo=algo,
+            safety_index="si1"
+        )
     
     
