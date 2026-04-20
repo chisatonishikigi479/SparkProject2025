@@ -1,7 +1,9 @@
 import numpy as np
 import pandas as pd
 
-file_path = "results_rssa.json/data.npz"
+import os
+
+file_path = os.path.join("..", "results_rssa_attack_crowding_high.json/data.npz")
 print(f"Loading compressed data from: {file_path}")
 data = np.load(file_path, allow_pickle=True)
 
@@ -30,7 +32,7 @@ for key in data.files:
 # 4. Save the cleanly formatted data!
 try:
     df = pd.DataFrame(csv_data)
-    save_name = "parsed_rssa_results_final.csv"
+    save_name = "parsed_results_rssa_attack_crowding_high.csv"
     df.to_csv(save_name, index=False)
     print(f"\nSuccess! Your complete tradeoff data is saved to: {save_name}")
 except ValueError as e:
