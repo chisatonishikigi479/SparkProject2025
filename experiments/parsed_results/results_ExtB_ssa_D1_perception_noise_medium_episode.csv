@@ -1,0 +1,2 @@
+file,algo,constraint_level,attack_type,attack_level,min_dist_to_env,mean_dist_to_env
+results_ExtB_ssa_D1_perception_noise_medium,ssa,D1,perception_noise,medium,-0.0016071540981206778,0.13372638853191932

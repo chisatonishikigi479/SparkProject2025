@@ -1,0 +1,2 @@
+file,algo,constraint_level,attack_type,attack_level,min_dist_to_env,mean_dist_to_env
+results_ExtB_cbf_D1_perception_noise_high,cbf,D1,perception_noise,high,-0.12600107669244465,0.14938038770820697

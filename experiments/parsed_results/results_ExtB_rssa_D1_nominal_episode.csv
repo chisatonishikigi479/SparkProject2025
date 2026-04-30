@@ -1,0 +1,2 @@
+file,algo,constraint_level,attack_type,attack_level,min_dist_to_env,mean_dist_to_env
+results_ExtB_rssa_D1_nominal,rssa,D1,nominal,none,-0.013487448441327696,0.13323181285541616

@@ -1,0 +1,2 @@
+min_dist_goal_base,mean_dist_goal_base,min_dist_to_env,mean_dist_to_env,min_dist_goal_right_arm,min_dist_goal_left_arm,done_any,done_sum,episode,file
+0.07973962256182941,0.5223355932003042,-0.0016071540981206778,0.13372638853191932,0.001213888337869265,0.0062458709731040615,True,4,0,data

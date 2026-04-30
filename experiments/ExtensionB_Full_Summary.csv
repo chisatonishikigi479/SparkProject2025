@@ -1,0 +1,16 @@
+file,algo,constraint_level,attack_type,attack_level,min_dist_to_env,mean_dist_to_env
+results_ExtB_cbf_D1_latency_high,cbf,D1,latency,high,-0.12600107669244465,0.14938038770820697
+results_ExtB_cbf_D1_latency_low,cbf,D1,latency,low,-0.12600107669244465,0.14938038770820697
+results_ExtB_cbf_D1_latency_medium,cbf,D1,latency,medium,-0.12600107669244465,0.14938038770820697
+results_ExtB_cbf_D1_nominal,cbf,D1,nominal,none,-0.12600107669244465,0.14938038770820697
+results_ExtB_cbf_D1_perception_noise_high,cbf,D1,perception_noise,high,-0.12600107669244465,0.14938038770820697
+results_ExtB_cbf_D1_perception_noise_low,cbf,D1,perception_noise,low,-0.12600107669244465,0.14938038770820697
+results_ExtB_cbf_D1_perception_noise_medium,cbf,D1,perception_noise,medium,-0.12600107669244465,0.14938038770820697
+results_ExtB_rssa_D1_nominal,rssa,D1,nominal,none,-0.013487448441327696,0.13323181285541616
+results_ExtB_ssa_D1_latency_high,ssa,D1,latency,high,-0.0016071540981206778,0.13372638853191932
+results_ExtB_ssa_D1_latency_low,ssa,D1,latency,low,-0.0016071540981206778,0.13372638853191932
+results_ExtB_ssa_D1_latency_medium,ssa,D1,latency,medium,-0.0016071540981206778,0.13372638853191932
+results_ExtB_ssa_D1_nominal,ssa,D1,nominal,none,-0.0016071540981206778,0.13372638853191932
+results_ExtB_ssa_D1_perception_noise_high,ssa,D1,perception_noise,high,-0.0016071540981206778,0.13372638853191932
+results_ExtB_ssa_D1_perception_noise_low,ssa,D1,perception_noise,low,-0.0016071540981206778,0.13372638853191932
+results_ExtB_ssa_D1_perception_noise_medium,ssa,D1,perception_noise,medium,-0.0016071540981206778,0.13372638853191932
