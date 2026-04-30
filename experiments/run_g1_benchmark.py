@@ -276,6 +276,26 @@ def run_benchmark_sweep(**base_kwargs):
         kwargs["enable_viewer"] = False
         kwargs["save_path"] = f"results_{safe_algo}_default.json"
         run(**kwargs)
+        
+def run_constraint_conflict_stress_test_v2(**base_kwargs):
+    algos = ["ssa", "cbf", "rssa", "rcbf"]
+    levels = ["D1", "D2"]                    # D2 usually has more obstacles → more conflicts
+    seeds = [10, 20, 30, 40, 50]
+    
+    for level in levels:
+        for algo in algos:
+            for seed in seeds:
+                run(
+                    test_case_name=f"G1SportMode_{level}_WG_SO_v1",
+                    safe_algo=algo,
+                    safety_index="si1",
+                    eta_ssa=0.1 if algo == "ssa" else None,
+                    lambda_cbf=10.0 if algo == "cbf" else None,
+                    slack_weight=1000 if "r" in algo else None,
+                    seed=seed,
+                    enable_viewer=False,
+                    save_path=f"results_ExtB_{algo}_{level}_seed{seed}.json"
+                )
             
         
 def run_constraint_conflict_stress_test(**base_kwargs):
@@ -352,9 +372,8 @@ def run_constraint_conflict_stress_test(**base_kwargs):
 if __name__ == "__main__":
     print("=== SPARK G1 Benchmark Script Started ===\n")
     
-    # === Extension B: Constraint Conflict Stress Test ===
-    run_constraint_conflict_stress_test(
-        test_case_name="G1SportMode",      # base name
+    run_constraint_conflict_stress_test_v2(
+        test_case_name="G1SportMode",      
         safety_index="si1"
     )
     
