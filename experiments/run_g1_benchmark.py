@@ -86,7 +86,6 @@ def config_safety_module(cfg: PipelineConfig, **kwargs):
         if hasattr(cfg.algo.safe_controller.safe_algo, 'control_weight'):
             cfg.algo.safe_controller.safe_algo.control_weight = cfg.algo.safe_controller.safe_algo.control_weight[3:10]
 
-    # Safety Index
     safety_index = kwargs.get("safety_index", "si1")
     match safety_index:
         case "si1":
@@ -94,7 +93,6 @@ def config_safety_module(cfg: PipelineConfig, **kwargs):
         case "si2":
             cfg.algo.safe_controller.safety_index.class_name = "SecondOrderCollisionSafetyIndex"
 
-    # Manual Attack Flags
     if attack_type:
         cfg.algo.safe_controller.attack_type = attack_type
         cfg.algo.safe_controller.attack_level = attack_level
@@ -139,7 +137,7 @@ def apply_manual_attacks(pipeline):
             if len(safety_index.latency_buffer) > safety_index.latency_delay:
                 return safety_index.latency_buffer.pop(0)
             else:
-                return current_dists  # return current until buffer is full
+                return current_dists 
         
         safety_index.get_distances = delayed_get_distances.__get__(safety_index)
         print(f"   → Latency attack injected (delay={delay} steps)")
@@ -305,7 +303,7 @@ def run_benchmark_sweep(**base_kwargs):
         
 def run_constraint_conflict_stress_test_v2(**base_kwargs):
     algos = ["ssa", "cbf", "rssa", "rcbf"]
-    levels = ["D1", "D2"]                    # D2 usually has more obstacles → more conflicts
+    levels = ["D1", "D2"]                    
     seeds = [10, 20, 30, 40, 50]
     
     for algo in algos:
@@ -350,7 +348,7 @@ def run_constraint_conflict_stress_test(**base_kwargs):
                         safety_index=safety_index,
                         attack_type=attack,
                         attack_level=level_name if attack else None,
-                        seed=42,                    # you can vary this too
+                        seed=42,                  
                         enable_viewer=False,
                         save_path=save_name
                     )
