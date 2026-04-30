@@ -277,34 +277,87 @@ def run_benchmark_sweep(**base_kwargs):
         kwargs["save_path"] = f"results_{safe_algo}_default.json"
         run(**kwargs)
             
+        
+def run_constraint_conflict_stress_test(**base_kwargs):
+    """
+    Extension B: Constraint conflict stress test
+    
+    Systematically increases the number of safety constraints (by using D1 vs D2 test cases)
+    until conflicts become common, then compares safety methods under:
+    - Perception noise attacks
+    - Latency attacks
+    
+    Metrics automatically logged: infeasibility rate, slack usage, collision rate,
+    minimum distance to obstacles, and task success rate.
+    """
+    test_case_base = base_kwargs.get("test_case_name", "G1SportMode")
+    safety_index = base_kwargs.get("safety_index", "si1")
+    
+    print("\n" + "="*80)
+    print("EXTENSION B: CONSTRAINT CONFLICT STRESS TEST")
+    print("Increasing number of safety constraints + noise/latency attacks")
+    print("="*80)
+
+    # Constraint levels: D1 = fewer obstacles (low conflict), D2 = more obstacles (high conflict)
+    constraint_levels = ["D1", "D2"]          # Add "D3" if your test cases support it
+    
+    # Safety methods to compare (strict vs relaxed)
+    algos = ["ssa", "cbf", "rssa", "rcbf"]    # you can add "sss", "rsss", "pfm", "sma"
+
+    # Attack types we will test on top of high constraint levels
+    attack_configs = [
+        (None, None),                                      # Nominal (baseline)
+        ("perception_noise", "low"),
+        ("perception_noise", "medium"),
+        ("perception_noise", "high"),
+        ("latency", "low"),
+        ("latency", "medium"),
+        ("latency", "high"),
+    ]
+
+    for constraint_level in constraint_levels:
+        # Construct the full test case name (e.g. G1SportMode_D2_WG_SO_v1)
+        test_case = f"{test_case_base}_{constraint_level}_WG_SO_v1"
+        
+        print(f"\n→ Constraint level: {constraint_level}  (test_case = {test_case})")
+        
+        for algo in algos:
+            print(f"   Running {algo} ...")
+            
+            for attack_type, attack_level in attack_configs:
+                if attack_type is None:
+                    save_name = f"results_ExtB_{algo}_{constraint_level}_nominal.json"
+                    attack_str = "nominal"
+                else:
+                    save_name = f"results_ExtB_{algo}_{constraint_level}_{attack_type}_{attack_level}.json"
+                    attack_str = f"{attack_type}-{attack_level}"
+                
+                run(
+                    test_case_name=test_case,
+                    safe_algo=algo,
+                    safety_index=safety_index,
+                    attack_type=attack_type,
+                    attack_level=attack_level,
+                    enable_viewer=False,
+                    save_path=save_name
+                )
+                
+                print(f"      └─ {attack_str} → {save_name}")
+
+    print("\n" + "="*80)
+    print("Extension B completed! All results saved with prefix 'results_ExtB_'")
+    print("Next step: run the analysis script to compare infeasibility rate, slack usage, etc.")
+    print("="*80)
             
 if __name__ == "__main__":
-    TASK_CASE = "G1SportMode_D1_WG_SO_v1"  
+    print("=== SPARK G1 Benchmark Script Started ===\n")
     
-    sweeps = [
-        {"safe_algo": "ssa",   "safety_index": "si1"},
-        {"safe_algo": "rssa",  "safety_index": "si1"},
-        {"safe_algo": "sss",   "safety_index": "si1"},
-        {"safe_algo": "rsss",  "safety_index": "si1"},
-        {"safe_algo": "cbf",   "safety_index": "si1"},
-        {"safe_algo": "rcbf",  "safety_index": "si1"},
-        {"safe_algo": "pfm",   "safety_index": "si1"},
-        {"safe_algo": "sma",   "safety_index": "si1"},
-
-    ]
-    '''
-    for sweep_config in sweeps:
-        run_benchmark_sweep(
-            test_case_name=TASK_CASE,
-            **sweep_config
-        )
-    '''
+    # === Extension B: Constraint Conflict Stress Test ===
+    run_constraint_conflict_stress_test(
+        test_case_name="G1SportMode",      # base name
+        safety_index="si1"
+    )
     
-    for algo in ["ssa", "rssa", "cbf", "rcbf", "rsss"]:
-        run_adversarial_sweep(
-            test_case_name=TASK_CASE,
-            safe_algo=algo,
-            safety_index="si1"
-        )
+    print("\n=== All runs completed! ===")
     
     
