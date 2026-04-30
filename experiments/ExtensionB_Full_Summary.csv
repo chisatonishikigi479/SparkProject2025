@@ -1,4 +1,5 @@
 file,algo,constraint_level,attack_type,attack_level,min_dist_to_env,mean_dist_to_env
+results_ExtB_ssa_D1_nominal_nominal,ssa,D1,nominal,none,-0.0016071540981206778,0.13372638853191932
 results_ExtB_cbf_D1_latency_high,cbf,D1,latency,high,-0.12600107669244465,0.14938038770820697
 results_ExtB_cbf_D1_latency_low,cbf,D1,latency,low,-0.12600107669244465,0.14938038770820697
 results_ExtB_cbf_D1_latency_medium,cbf,D1,latency,medium,-0.12600107669244465,0.14938038770820697

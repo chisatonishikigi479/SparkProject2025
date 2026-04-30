@@ -85,7 +85,6 @@ if __name__ == "__main__":
     if all_episodes:
         final_summary = pd.concat(all_episodes, ignore_index=True)
         
-        # Nice ordering of columns
         cols = ["file", "algo", "constraint_level", "attack_type", "attack_level",
                 "infeasibility_rate", "mean_slack", "max_slack", "slack_active_rate",
                 "min_dist_to_env", "mean_dist_to_env", "total_steps"]

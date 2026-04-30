@@ -26,7 +26,7 @@ def config_agent_module(cfg: PipelineConfig, **kwargs):
     """Configure agent-related settings."""
     cfg.env.agent.enable_viewer = True
     cfg.env.agent.use_sim_dynamics = False
-    cfg.env.agent.real_time_factor = 0.0
+    #cfg.env.agent.real_time_factor = 0.0
     return cfg
 
 def config_policy_module(cfg: PipelineConfig, **kwargs):
