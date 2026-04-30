@@ -11,7 +11,7 @@ print("=== DIAGNOSIS: Are the experiments actually different? ===\n")
 
 files = sorted(parsed_dir.glob("*_timestep.csv"))
 
-for f in files[:10]:  
+for f in files[:20]:  
     df = pd.read_csv(f)
     name = f.stem.replace("_timestep", "")
     

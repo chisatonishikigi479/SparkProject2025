@@ -319,14 +319,14 @@ def run_constraint_conflict_stress_test(**base_kwargs):
     print("="*80)
 
     # Constraint levels: D1 = fewer obstacles (low conflict), D2 = more obstacles (high conflict)
-    constraint_levels = ["D1", "D2"]          # Add "D3" if your test cases support it
+    constraint_levels = ["D1", "D2"]         
     
     # Safety methods to compare (strict vs relaxed)
-    algos = ["ssa", "cbf", "rssa", "rcbf"]    # you can add "sss", "rsss", "pfm", "sma"
+    algos = ["ssa", "cbf", "rssa", "rcbf"]   
 
     # Attack types we will test on top of high constraint levels
     attack_configs = [
-        (None, None),                                      # Nominal (baseline)
+        (None, None),                                     
         ("perception_noise", "low"),
         ("perception_noise", "medium"),
         ("perception_noise", "high"),

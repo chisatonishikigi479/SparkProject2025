@@ -14,3 +14,6 @@ results_ExtB_ssa_D1_nominal,ssa,D1,nominal,none,-0.0016071540981206778,0.1337263
 results_ExtB_ssa_D1_perception_noise_high,ssa,D1,perception_noise,high,-0.0016071540981206778,0.13372638853191932
 results_ExtB_ssa_D1_perception_noise_low,ssa,D1,perception_noise,low,-0.0016071540981206778,0.13372638853191932
 results_ExtB_ssa_D1_perception_noise_medium,ssa,D1,perception_noise,medium,-0.0016071540981206778,0.13372638853191932
+results_ExtB_ssa_D1_seed10,ssa,D1,nominal,none,-0.0016071540981206778,0.13372638853191932
+results_ExtB_ssa_D1_seed20,ssa,D1,nominal,none,-0.0016071540981206778,0.13372638853191932
+results_ExtB_ssa_D1_seed30,ssa,D1,nominal,none,-0.0016071540981206778,0.13372638853191932
