@@ -1,6 +1,20 @@
+
+import os
+import sys
+
+'''
+os.environ["MUJOCO_GL"] = "osmesa"      
+os.environ["PYOPENGL_PLATFORM"] = "osmesa"
+os.environ["DISPLAY"] = ""
+os.environ["LIBGL_ALWAYS_SOFTWARE"] = "1"
+'''
+
 from spark_pipeline import BenchmarkPipeline as Pipeline
 from spark_pipeline import G1BenchmarkPipelineConfig as PipelineConfig
 from spark_pipeline import generate_benchmark_test_case
+
+
+import numpy as np
 
 def config_task_module(cfg: PipelineConfig, **kwargs):
     """Configure task-related settings."""
@@ -12,6 +26,7 @@ def config_agent_module(cfg: PipelineConfig, **kwargs):
     """Configure agent-related settings."""
     cfg.env.agent.enable_viewer = True
     cfg.env.agent.use_sim_dynamics = False
+    cfg.env.agent.real_time_factor = 0.0
     return cfg
 
 def config_policy_module(cfg: PipelineConfig, **kwargs):
@@ -20,105 +35,114 @@ def config_policy_module(cfg: PipelineConfig, **kwargs):
     return cfg
 
 def config_safety_module(cfg: PipelineConfig, **kwargs):
-    """Configure safety-related settings."""
-    # --------------------- Config Safe Control Algorithm --------------------- #
-    safe_algo = kwargs.get("safe_algo", "bypass")  # Default to 'bypass' if not provided
+    safe_algo = kwargs.get("safe_algo", "bypass")
+    attack_type = kwargs.get("attack_type")
+    attack_level = kwargs.get("attack_level", "medium")
+
     match safe_algo:
         case "bypass":
             cfg.algo.safe_controller.safe_algo.class_name = "ByPassSafeControl"
-        
+
         case "ssa":
-            cfg.algo.safe_controller.safe_algo.class_name = "BasicSafeSetAlgorithm"
-            cfg.algo.safe_controller.safe_algo.eta_ssa = 0.1
-            cfg.algo.safe_controller.safe_algo.control_weight = [
-                1.0, 1.0, 1.0,  # waist
-                1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,  # left arm
-                1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,  # right arm
-                1.0, 1.0, 1.0,
-            ]
-        
+            cfg.algo.safe_controller.safe_algo.class_name = "BasicSafeSetAlgorithm"   # ← Correct name
+            cfg.algo.safe_controller.safe_algo.eta_ssa = kwargs.get("eta_ssa", 0.1)
+
         case "rssa":
             cfg.algo.safe_controller.safe_algo.class_name = "RelaxedSafeSetAlgorithm"
-            cfg.algo.safe_controller.safe_algo.eta_ssa = 0.1
-            cfg.algo.safe_controller.safe_algo.slack_weight = 1e3
-            cfg.algo.safe_controller.safe_algo.control_weight = [
-                1.0, 1.0, 1.0,  # waist
-                1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,  # left arm
-                1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,  # right arm
-                1.0, 1.0, 1.0  # locomotion
-            ]
-        
+            cfg.algo.safe_controller.safe_algo.eta_ssa = kwargs.get("eta_ssa", 0.1)
+            cfg.algo.safe_controller.safe_algo.slack_weight = kwargs.get("slack_weight", 1000)
+
         case "sss":
             cfg.algo.safe_controller.safe_algo.class_name = "BasicSublevelSafeSetAlgorithm"
-            cfg.algo.safe_controller.safe_algo.lambda_sss = 10.0
-            cfg.algo.safe_controller.safe_algo.control_weight = [
-                1.0, 1.0, 1.0,  # waist
-                1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,  # left arm
-                1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,  # right arm
-                1.0, 1.0, 1.0  # locomotion
-            ]
-            
+            cfg.algo.safe_controller.safe_algo.lambda_sss = kwargs.get("lambda_sss", 10.0)
+
         case "rsss":
             cfg.algo.safe_controller.safe_algo.class_name = "RelaxedSublevelSafeSetAlgorithm"
-            cfg.algo.safe_controller.safe_algo.lambda_sss = 10.0
-            cfg.algo.safe_controller.safe_algo.slack_weight = 1e3
-            cfg.algo.safe_controller.safe_algo.control_weight = [
-                1.0, 1.0, 1.0,  # waist
-                1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,  # left arm
-                1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,  # right arm
-                1.0, 1.0, 1.0  # locomotion
-            ]
-        
+            cfg.algo.safe_controller.safe_algo.lambda_sss = kwargs.get("lambda_sss", 10.0)
+            cfg.algo.safe_controller.safe_algo.slack_weight = kwargs.get("slack_weight", 1000)
+
         case "cbf":
             cfg.algo.safe_controller.safe_algo.class_name = "BasicControlBarrierFunction"
-            cfg.algo.safe_controller.safe_algo.lambda_cbf = 10.0
-            cfg.algo.safe_controller.safe_algo.control_weight = [
-                1.0, 1.0, 1.0,  # waist
-                1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,  # left arm
-                1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,  # right arm
-                1.0, 1.0, 1.0  # locomotion
-            ]
-            
+            cfg.algo.safe_controller.safe_algo.lambda_cbf = kwargs.get("lambda_cbf", 10.0)
+
         case "rcbf":
             cfg.algo.safe_controller.safe_algo.class_name = "RelaxedControlBarrierFunction"
-            cfg.algo.safe_controller.safe_algo.lambda_cbf = 10.0
-            cfg.algo.safe_controller.safe_algo.slack_weight = 1e3
-            cfg.algo.safe_controller.safe_algo.control_weight = [
-                1.0, 1.0, 1.0,  # waist
-                1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,  # left arm
-                1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,  # right arm
-                1.0, 1.0, 1.0  # locomotion
-            ]
-        
+            cfg.algo.safe_controller.safe_algo.lambda_cbf = kwargs.get("lambda_cbf", 10.0)
+            cfg.algo.safe_controller.safe_algo.slack_weight = kwargs.get("slack_weight", 1000)
+
         case "pfm":
             cfg.algo.safe_controller.safe_algo.class_name = "BasicPotentialFieldMethod"
-            cfg.algo.safe_controller.safe_algo.c_pfm = 1.0
-        
+            cfg.algo.safe_controller.safe_algo.c_pfm = kwargs.get("c_pfm", 1.0)
+
         case "sma":
             cfg.algo.safe_controller.safe_algo.class_name = "BasicSlidingModeAlgorithm"
-            cfg.algo.safe_controller.safe_algo.c_sma = 1.0
-            
-    if "FixedBase" in cfg.robot.cfg.class_name:
-        cfg.algo.safe_controller.safe_algo.control_weight = cfg.algo.safe_controller.safe_algo.control_weight[:-3]
-    elif "RightArm" in cfg.robot.cfg.class_name:
-        cfg.algo.safe_controller.safe_algo.control_weight = cfg.algo.safe_controller.safe_algo.control_weight[3:10]
+            cfg.algo.safe_controller.safe_algo.c_sma = kwargs.get("c_sma", 1.0)
 
-    # --------------------- Config Safe Control Index --------------------- #
-    safety_index = kwargs.get("safety_index", "si1")  # Default to 'si1' if not provided
+    # Control weight truncation
+    if "FixedBase" in cfg.robot.cfg.class_name:
+        if hasattr(cfg.algo.safe_controller.safe_algo, 'control_weight'):
+            cfg.algo.safe_controller.safe_algo.control_weight = cfg.algo.safe_controller.safe_algo.control_weight[:-3]
+    elif "RightArm" in cfg.robot.cfg.class_name:
+        if hasattr(cfg.algo.safe_controller.safe_algo, 'control_weight'):
+            cfg.algo.safe_controller.safe_algo.control_weight = cfg.algo.safe_controller.safe_algo.control_weight[3:10]
+
+    # Safety Index
+    safety_index = kwargs.get("safety_index", "si1")
     match safety_index:
         case "si1":
             cfg.algo.safe_controller.safety_index.class_name = "FirstOrderCollisionSafetyIndex"
         case "si2":
             cfg.algo.safe_controller.safety_index.class_name = "SecondOrderCollisionSafetyIndex"
-            cfg.algo.safe_controller.safety_index.phi_n = 1.0
-            cfg.algo.safe_controller.safety_index.phi_k = 1.0
-        case 'si2nn':
-            cfg.algo.safe_controller.safety_index.class_name = "SecondOrderNNCollisionSafetyIndex"
-            cfg.algo.safe_controller.safety_index.phi_n = 2,
-            cfg.algo.safe_controller.safety_index.phi_k = 1,
-            cfg.algo.safe_controller.safety_index.phi_nn_path = "n_2_scalar.onnx"
+
+    # Manual Attack Flags
+    if attack_type:
+        cfg.algo.safe_controller.attack_type = attack_type
+        cfg.algo.safe_controller.attack_level = attack_level
+        print(f"[Attack Configured] {attack_type} ({attack_level})")
 
     return cfg
+
+def apply_manual_attacks(pipeline):
+    """Apply manual attacks by monkey-patching the safety index"""
+    if not hasattr(pipeline.cfg.algo.safe_controller, 'attack_type'):
+        return
+
+    attack_type = pipeline.cfg.algo.safe_controller.attack_type
+    if not attack_type:
+        return
+
+    safety_index = pipeline.agent.safety_index 
+    if attack_type == "perception_noise":
+        std = getattr(pipeline.cfg.algo.safe_controller, 'perception_noise_std', 0.08)
+        
+        original_get_distances = safety_index.get_distances
+        
+        def noisy_get_distances(self, *args, **kwargs):
+            dists = original_get_distances(*args, **kwargs)
+            noise = np.random.normal(0, std, size=dists.shape)
+            return np.maximum(dists + noise, 0.0)   
+        
+        safety_index.get_distances = noisy_get_distances.__get__(safety_index)
+        print(f"   → Perception noise injected (std={std})")
+
+    elif attack_type == "latency":
+        delay = getattr(pipeline.cfg.algo.safe_controller, 'obstacle_latency_steps', 8)
+        safety_index.latency_buffer = []
+        safety_index.latency_delay = delay
+        
+        original_get_distances = safety_index.get_distances
+        
+        def delayed_get_distances(self, *args, **kwargs):
+            current_dists = original_get_distances(*args, **kwargs)
+            safety_index.latency_buffer.append(current_dists.copy())
+            
+            if len(safety_index.latency_buffer) > safety_index.latency_delay:
+                return safety_index.latency_buffer.pop(0)
+            else:
+                return current_dists  # return current until buffer is full
+        
+        safety_index.get_distances = delayed_get_distances.__get__(safety_index)
+        print(f"   → Latency attack injected (delay={delay} steps)")
 
 def config_pipeline(cfg: PipelineConfig, **kwargs):
     test_case_name = kwargs.get("test_case_name", "G1MobileBase_D1_WG_SO_v0")
@@ -164,30 +188,32 @@ def config_pipeline(cfg: PipelineConfig, **kwargs):
 
     return cfg
     
-def run( **kwargs):
+def run(**kwargs):
     cfg = PipelineConfig()
-    
+
     cfg = config_pipeline(cfg, **kwargs)
     cfg = config_task_module(cfg, **kwargs)
     cfg = config_agent_module(cfg, **kwargs)
     cfg = config_policy_module(cfg, **kwargs)
     cfg = config_safety_module(cfg, **kwargs)
     
+
     pipeline = Pipeline(cfg)
     
+    apply_manual_attacks(pipeline)
+    
     save_path = kwargs.get("save_path")
-    print(f"Running {kwargs.get('safe_algo', 'unknown')} | save_path = {save_path}")
+    print(f"→ Running | Algo={kwargs.get('safe_algo')} | Attack={kwargs.get('attack_type')} | Save={save_path}")
     
     try:
-        pipeline.run(save_path=save_path)  
+        pipeline.run(save_path=save_path)
+        print(f"Finished: {save_path}")
     except Exception as e:
         print(f"Error during pipeline.run(): {e}")
         import traceback
         traceback.print_exc()
     
-    print(f"Finished run. Expected results file: {save_path}\n")
-    return
-    
+    print("-" * 80)
 def run_adversarial_sweep(**base_kwargs):
     test_case = base_kwargs.get("test_case_name")
     safe_algo = base_kwargs.get("safe_algo")
@@ -282,9 +308,9 @@ def run_constraint_conflict_stress_test_v2(**base_kwargs):
     levels = ["D1", "D2"]                    # D2 usually has more obstacles → more conflicts
     seeds = [10, 20, 30, 40, 50]
     
-    for level in levels:
-        for algo in algos:
-            for seed in seeds:
+    for algo in algos:
+        for seed in seeds:
+            for level in levels:
                 run(
                     test_case_name=f"G1SportMode_{level}_WG_SO_v1",
                     safe_algo=algo,
@@ -299,84 +325,49 @@ def run_constraint_conflict_stress_test_v2(**base_kwargs):
             
         
 def run_constraint_conflict_stress_test(**base_kwargs):
-    """
-    Extension B: Constraint conflict stress test
-    
-    Systematically increases the number of safety constraints (by using D1 vs D2 test cases)
-    until conflicts become common, then compares safety methods under:
-    - Perception noise attacks
-    - Latency attacks
-    
-    Metrics automatically logged: infeasibility rate, slack usage, collision rate,
-    minimum distance to obstacles, and task success rate.
-    """
-    test_case_base = base_kwargs.get("test_case_name", "G1SportMode")
+    """Run full stress test with D1/D2 + manual attacks"""
+    base_name = base_kwargs.get("test_case_name", "G1SportMode")
     safety_index = base_kwargs.get("safety_index", "si1")
     
-    print("\n" + "="*80)
-    print("EXTENSION B: CONSTRAINT CONFLICT STRESS TEST")
-    print("Increasing number of safety constraints + noise/latency attacks")
-    print("="*80)
-
-    # Constraint levels: D1 = fewer obstacles (low conflict), D2 = more obstacles (high conflict)
-    constraint_levels = ["D1", "D2"]         
+    algos = ["ssa", "cbf", "rssa", "rcbf"]
+    levels = ["D1", "D2"]
     
-    # Safety methods to compare (strict vs relaxed)
-    algos = ["ssa", "cbf", "rssa", "rcbf"]   
-
-    # Attack types we will test on top of high constraint levels
-    attack_configs = [
-        (None, None),                                     
-        ("perception_noise", "low"),
-        ("perception_noise", "medium"),
-        ("perception_noise", "high"),
-        ("latency", "low"),
-        ("latency", "medium"),
-        ("latency", "high"),
-    ]
-
-    for constraint_level in constraint_levels:
-        # Construct the full test case name (e.g. G1SportMode_D2_WG_SO_v1)
-        test_case = f"{test_case_base}_{constraint_level}_WG_SO_v1"
-        
-        print(f"\n→ Constraint level: {constraint_level}  (test_case = {test_case})")
+    print("Starting Constraint Conflict Stress Test with Manual Attacks...\n")
+    
+    for level in levels:
+        test_case = f"{base_name}_{level}_WG_SO_v1"
+        print(f"\n=== Testing Constraint Level: {level} === ({test_case})")
         
         for algo in algos:
-            print(f"   Running {algo} ...")
-            
-            for attack_type, attack_level in attack_configs:
-                if attack_type is None:
-                    save_name = f"results_ExtB_{algo}_{constraint_level}_nominal.json"
-                    attack_str = "nominal"
-                else:
-                    save_name = f"results_ExtB_{algo}_{constraint_level}_{attack_type}_{attack_level}.json"
-                    attack_str = f"{attack_type}-{attack_level}"
-                
-                run(
-                    test_case_name=test_case,
-                    safe_algo=algo,
-                    safety_index=safety_index,
-                    attack_type=attack_type,
-                    attack_level=attack_level,
-                    enable_viewer=False,
-                    save_path=save_name
-                )
-                
-                print(f"      └─ {attack_str} → {save_name}")
-
-    print("\n" + "="*80)
-    print("Extension B completed! All results saved with prefix 'results_ExtB_'")
-    print("Next step: run the analysis script to compare infeasibility rate, slack usage, etc.")
-    print("="*80)
+            for attack in [None, "perception_noise", "latency"]:
+                for level_name in ["low", "medium", "high"] if attack else ["nominal"]:
+                    
+                    save_name = f"results_ExtB_{algo}_{level}_{attack or 'nominal'}_{level_name}.json"
+                    
+                    run(
+                        test_case_name=test_case,
+                        safe_algo=algo,
+                        safety_index=safety_index,
+                        attack_type=attack,
+                        attack_level=level_name if attack else None,
+                        seed=42,                    # you can vary this too
+                        enable_viewer=False,
+                        save_path=save_name
+                    )
+                    print(f"   → {algo:6} | {level} | Attack: {attack or 'nominal':18} | {level_name}")
             
 if __name__ == "__main__":
-    print("=== SPARK G1 Benchmark Script Started ===\n")
+    print("=== SPARK G1 Benchmark - Constraint Conflict Stress Test with Manual Attacks ===\n")
     
-    run_constraint_conflict_stress_test_v2(
-        test_case_name="G1SportMode",      
+    
+    
+    TASK_BASE = "G1SportMode"
+    run_constraint_conflict_stress_test(
+        test_case_name=TASK_BASE,
         safety_index="si1"
     )
-    
-    print("\n=== All runs completed! ===")
+
+    print("\n=== All experiments finished! ===\n")
+    print("Next: Run the parser → then the plotting scripts.")
     
     
