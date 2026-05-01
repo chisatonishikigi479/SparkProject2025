@@ -1,0 +1,9 @@
+folder,algo,constraint_level,attack_type,attack_level,min_dist,mean_dist,collision_rate
+ExtB_G1MobileBase_cbf_D1_nominal_nominal.npz,cbf,D1,nominal,nominal,0.002129962724691488,0.07642389370659837,0.01633333333333333
+ExtB_G1MobileBase_ssa_D1_latency_high.npz,ssa,D1,latency,high,0.0062458709731040615,0.07869959277789945,0.0023333333333333335
+ExtB_G1MobileBase_ssa_D1_latency_low.npz,ssa,D1,latency,low,0.0062458709731040615,0.07869959277789945,0.0023333333333333335
+ExtB_G1MobileBase_ssa_D1_latency_medium.npz,ssa,D1,latency,medium,0.0062458709731040615,0.07869959277789945,0.0023333333333333335
+ExtB_G1MobileBase_ssa_D1_nominal_nominal.npz,ssa,D1,nominal,nominal,0.0062458709731040615,0.07869959277789945,0.0023333333333333335
+ExtB_G1MobileBase_ssa_D1_perception_noise_high.npz,ssa,D1,perception_noise,high,0.0062458709731040615,0.07869959277789945,0.0023333333333333335
+ExtB_G1MobileBase_ssa_D1_perception_noise_low.npz,ssa,D1,perception_noise,low,0.0062458709731040615,0.07869959277789945,0.0023333333333333335
+ExtB_G1MobileBase_ssa_D1_perception_noise_medium.npz,ssa,D1,perception_noise,medium,0.008567603605152489,0.07935690913210441,0.0016666666666666668
