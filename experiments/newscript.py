@@ -101,7 +101,6 @@ def config_safety_module(cfg: PipelineConfig, **kwargs):
     return cfg
 
 def apply_manual_attacks(pipeline):
-    """Corrected manual attack injection - uses actual method names"""
     if not hasattr(pipeline.cfg.algo.safe_controller, 'attack_type'):
         return
 
@@ -161,7 +160,7 @@ def config_pipeline(cfg: PipelineConfig, **kwargs):
     test_case_name = kwargs.get("test_case_name", "G1MobileBase_D1_WG_SO_v0")
     cfg = generate_benchmark_test_case(cfg, test_case_name)
     
-    cfg.max_num_steps = 50
+    cfg.max_num_steps = 1500
     cfg.max_num_reset = -1
     cfg.enable_logger = True
     cfg.enable_safe_zone_render = False
@@ -334,7 +333,7 @@ def run_constraint_conflict_stress_test(**base_kwargs):
             for attack in [None, "perception_noise", "latency"]:
                 for level_name in ["low", "medium", "high"] if attack else ["nominal"]:
                     
-                    save_name = f"results_attacks/ExtB_{algo}_{level}_{attack or 'nominal'}_{level_name}.npz"
+                    save_name = f"results_attacks_v2_G1MobileBase/ExtB_G1MobileBase_{algo}_{level}_{attack or 'nominal'}_{level_name}.npz"
                     
                     run(
                         test_case_name=test_case,
