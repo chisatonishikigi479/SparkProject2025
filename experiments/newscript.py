@@ -302,7 +302,7 @@ def run_constraint_conflict_stress_test_v2(**base_kwargs):
         for seed in seeds:
             for level in levels:
                 run(
-                    test_case_name=f"G1SportMode_{level}_WG_SO_v1",
+                    test_case_name=f"G1MobileBase_{level}_WG_SO_v1",
                     safe_algo=algo,
                     safety_index="si1",
                     eta_ssa=0.1 if algo == "ssa" else None,
@@ -310,7 +310,7 @@ def run_constraint_conflict_stress_test_v2(**base_kwargs):
                     slack_weight=1000 if "r" in algo else None,
                     seed=seed,
                     enable_viewer=False,
-                    save_path=f"results_ExtB_{algo}_{level}_seed{seed}.json"
+                    save_path=f"results_ExtB_G1MobileBase_{algo}_{level}_seed{seed}.json"
                 )
             
         
@@ -324,7 +324,6 @@ def run_constraint_conflict_stress_test(**base_kwargs):
     
     print("Starting Constraint Conflict Stress Test with Manual Attacks...\n")
     
-    # Create an output directory to keep things clean
     os.makedirs("results_attacks", exist_ok=True)
     
     for level in levels:
@@ -335,7 +334,6 @@ def run_constraint_conflict_stress_test(**base_kwargs):
             for attack in [None, "perception_noise", "latency"]:
                 for level_name in ["low", "medium", "high"] if attack else ["nominal"]:
                     
-                    # FIX: Save as .npz inside a dedicated folder!
                     save_name = f"results_attacks/ExtB_{algo}_{level}_{attack or 'nominal'}_{level_name}.npz"
                     
                     run(
